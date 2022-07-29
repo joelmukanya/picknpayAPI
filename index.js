@@ -20,10 +20,10 @@ app.listen(port, ()=> {
 });
 
 // User registration
-router.post('/register', bodyParser.json(), async (req, res)=> {
+router.post('/register', bodyParser.json(), 
+    async (req, res)=> {
     const bd = req.body; 
     // Encrypting a password
-    // Default genSalt() is 10
     bd.userpassword = await hash(bd.userpassword, 10);
     // Query
     const strQry = 
