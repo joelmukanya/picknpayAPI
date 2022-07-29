@@ -1,6 +1,6 @@
-# Create a node app by typing the following command.
+# Create a node app by typing the following command
 
-# npm init -y 
+# npm init -y
 
 # Install the below packages:
 
