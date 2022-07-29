@@ -18,7 +18,6 @@ app.use(router, cors(), express.json(), express.urlencoded({
 app.listen(port, ()=> {
     console.log(`Server is running on port ${port}`);
 });
-
 // User registration
 router.post('/register', bodyParser.json(), 
     async (req, res)=> {
@@ -60,7 +59,6 @@ compare(req.body.userpassword, results.userpassword)
 require('crypto').randomBytes(64).toString('hex')
 */
 })
-
 // Create new products
 router.post('/products', bodyParser.json(), (req, res)=> {
     const bd = req.body; 
@@ -141,9 +139,3 @@ router.delete('/clinic/:id', (req, res)=> {
         res.send(`${data.affectedRows} row was affected`);
     })
 });
-/*
-res.status(200).json({
-    status: 200,
-    results: results
-})
-*/
