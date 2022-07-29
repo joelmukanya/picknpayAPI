@@ -1,1 +1,14 @@
 
+
+# 3 hash tag to specify the start of a new request.
+###
+POST http://localhost:3000/products
+Content-Type: application/json
+
+{
+    "prodName": "Super Maize 10kg",
+    "prodUrl": "https://i.postimg.cc/zv72J9zG/super-Maize-Meal10kg.jpg",
+    "quantity": 1,
+    "price": 80,
+    "dateCreated": "2022-07-29T18:13:00"
+}
