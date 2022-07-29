@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { createConnection } = require('mysql');
 // Create connection variable
-let connection = null;
+let connection;
 // Problem solved
 (function handleConnection() {
     connection = createConnection({
@@ -25,5 +25,5 @@ let connection = null;
         }
     })    
 })();
-
+console.log(connection);
 module.exports = connection;
