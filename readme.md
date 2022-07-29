@@ -8,7 +8,7 @@
 
 # npm i nodemon --save-dev
 
-# NB: In case you clone my rep jsut type: npm i (to install all dependencies)
+# NB: In case you clone my rep just type: npm i (to install all dependencies)
 
 # Please create an .env file and place your database credentials and user account information.
 
