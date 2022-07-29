@@ -1,6 +1,8 @@
 require('dotenv').config();
 const { createConnection } = require('mysql');
+// Create connection variable
 let connection = null;
+// Problem solved
 (function handleConnection() {
     connection = createConnection({
         host: process.env.host,
