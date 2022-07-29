@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const db = require('./config/dbconn');
-const {genSalt, hash} = require('bcrypt');
+const {compare, hash} = require('bcrypt');
 // Express app
 const app = express();
 // Express router
