@@ -11,9 +11,10 @@ const app = express();
 const router = express.Router();
 // Configuration 
 const port = parseInt(process.env.Port) || 4000;
-app.use(router, cors(), express.json(), express.urlencoded({
-    extended: true
-}));
+app.use(router, cors(), express.json(), 
+    express.urlencoded({
+    extended: true})
+);
 
 app.listen(port, ()=> {
     console.log(`Server is running on port ${port}`);
