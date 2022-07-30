@@ -25,5 +25,4 @@ let connection;
         }
     })    
 })();
-console.log(connection);
 module.exports = connection;

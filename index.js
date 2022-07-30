@@ -15,48 +15,60 @@ app.use(router, cors(), express.json(),
     express.urlencoded({
     extended: true})
 );
-// Make use of bodyParse.json() middleware
-// in our app
-app.use(bodyParser.json());
-
+// 
 app.listen(port, ()=> {
     console.log(`Server is running on port ${port}`);
 });
 // User registration
-router.post('/register', 
+router.post('/register',bodyParser.json(), 
     async (req, res)=> {
     const bd = req.body; 
+    if(bd.userRole === ' ' || bd.userRole === null) {
+        bd.userRole = 'user';
+    }
     // Encrypting a password
     bd.userpassword = await hash(bd.userpassword, 10);
+    // 
     // Query
     const strQry = 
     `
-    INSERT INTO users(firstname, lastname, gender, address, email, userpassword)
-    VALUES(?, ?, ?, ?, ?, ?);
+    INSERT INTO users(firstname, lastname, gender, address, userRole, email, userpassword)
+    VALUES(?, ?, ?, ?, ?, ?, ?);
     `;
     //
     db.query(strQry, 
-        [bd.firstname, bd.lastname, bd.gender, bd.address, bd.email, bd.userpassword],
+        [bd.firstname, bd.lastname, bd.gender, bd.address, bd.userRole,bd.email, bd.userpassword],
         (err, results)=> {
             if(err) throw err;
             res.send(`number of affected row/s: ${results.affectedRows}`);
         })
 });
 // Login
-router.post('/login',(req, res)=> {
+router.post('/login', bodyParser.json(),
+    (req, res)=> {
+    // Get email and password
+    const { email, userpassword } = req.body;
     const strQry = 
     `
     SELECT firstname, gender, email, userpassword
-    FROM users;
+    FROM users 
+    WHERE email = '${email}';
     `;
-    db.query(strQry, (err, results)=> {
+    db.query(strQry, async (err, results)=> {
         if(err) throw err;
         res.json({
             status: 200,
-            results: results
+            results: (await compare(userpassword,
+                results[0].userpassword)) ? results : 
+                'You provided a wrong email or password'
         })
     })
 /*
+(await 
+compare(userpassword, 
+    results.userpassword ) ) ? results :
+    'You provide a wrong email or password'
+====
 Have to compare: 
 compare(req.body.userpassword, results.userpassword)
 ======
@@ -64,7 +76,8 @@ require('crypto').randomBytes(64).toString('hex')
 */
 })
 // Create new products
-router.post('/products', (req, res)=> {
+router.post('/products', bodyParser.json(), 
+    (req, res)=> {
     const bd = req.body; 
     bd.totalamount = bd.quantity * bd.price;
     // Query
