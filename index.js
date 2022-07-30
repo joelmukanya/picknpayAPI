@@ -15,12 +15,15 @@ app.use(router, cors(), express.json(),
     express.urlencoded({
     extended: true})
 );
+// Make use of bodyParse.json() middleware
+// in our app
+app.use(bodyParser.json());
 
 app.listen(port, ()=> {
     console.log(`Server is running on port ${port}`);
 });
 // User registration
-router.post('/register', bodyParser.json(), 
+router.post('/register', 
     async (req, res)=> {
     const bd = req.body; 
     // Encrypting a password
@@ -40,7 +43,7 @@ router.post('/register', bodyParser.json(),
         })
 });
 // Login
-router.post('/login', bodyParser.json(), (req, res)=> {
+router.post('/login',(req, res)=> {
     const strQry = 
     `
     SELECT firstname, gender, email, userpassword
@@ -61,7 +64,7 @@ require('crypto').randomBytes(64).toString('hex')
 */
 })
 // Create new products
-router.post('/products', bodyParser.json(), (req, res)=> {
+router.post('/products', (req, res)=> {
     const bd = req.body; 
     bd.totalamount = bd.quantity * bd.price;
     // Query
@@ -113,7 +116,7 @@ router.get('/products/:id', (req, res)=> {
     })
 });
 // Update product
-router.put('/products', bodyParser.json(), (req, res)=> {
+router.put('/products', (req, res)=> {
     const bd = req.body;
     // Query
     const strQry = 
