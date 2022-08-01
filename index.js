@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require('path');
 const db = require('./config/dbconn');
 const {compare, hash} = require('bcrypt');
 // Express app
@@ -18,6 +19,10 @@ app.use(router, cors(), express.json(),
 // 
 app.listen(port, ()=> {
     console.log(`Server is running on port ${port}`);
+});
+// home
+router.get('/', (req, res)=> {
+    res.status(200).sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 // User registration
 router.post('/register',bodyParser.json(), 
