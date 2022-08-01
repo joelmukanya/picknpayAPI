@@ -22,77 +22,79 @@ app.listen(port, ()=> {
 // User registration
 router.post('/register',bodyParser.json(), 
     async (req, res)=> {
-    const bd = req.body; 
-    if(bd.userRole === ' ' || bd.userRole === null) {
-        bd.userRole = 'user';
+    try{
+        const bd = req.body; 
+        if(bd.userRole === ' ' || bd.userRole === null) {
+            bd.userRole = 'user';
+        }
+        // Encrypting a password
+        // Default value of salt is 10. 
+        bd.userpassword = await hash(bd.userpassword, 10);
+        // Query
+        const strQry = 
+        `
+        INSERT INTO users(firstname, lastname, gender, address, userRole, email, userpassword)
+        VALUES(?, ?, ?, ?, ?, ?, ?);
+        `;
+        db.query(strQry, 
+            [bd.firstname, bd.lastname, bd.gender, bd.address, bd.userRole,bd.email, bd.userpassword],
+            (err, results)=> {
+                if(err) throw err;
+                res.send(`number of affected row/s: ${results.affectedRows}`);
+            })
+    }catch(e) {
+        console.log(`From registration: ${e.message}`);
     }
-    // Encrypting a password
-    bd.userpassword = await hash(bd.userpassword, 10);
-    // 
-    // Query
-    const strQry = 
-    `
-    INSERT INTO users(firstname, lastname, gender, address, userRole, email, userpassword)
-    VALUES(?, ?, ?, ?, ?, ?, ?);
-    `;
-    //
-    db.query(strQry, 
-        [bd.firstname, bd.lastname, bd.gender, bd.address, bd.userRole,bd.email, bd.userpassword],
-        (err, results)=> {
-            if(err) throw err;
-            res.send(`number of affected row/s: ${results.affectedRows}`);
-        })
 });
 // Login
 router.post('/login', bodyParser.json(),
     (req, res)=> {
-    // Get email and password
-    const { email, userpassword } = req.body;
-    const strQry = 
-    `
-    SELECT firstname, gender, email, userpassword
-    FROM users 
-    WHERE email = '${email}';
-    `;
-    db.query(strQry, async (err, results)=> {
-        if(err) throw err;
-        res.json({
-            status: 200,
-            results: (await compare(userpassword,
-                results[0].userpassword)) ? results : 
-                'You provided a wrong email or password'
+    try{
+
+        // Get email and password
+        const { email, userpassword } = req.body;
+        const strQry = 
+        `
+        SELECT firstname, gender, email, userpassword
+        FROM users 
+        WHERE email = '${email}';
+        `;
+        db.query(strQry, async (err, results)=> {
+            if(err) throw err;
+            res.json({
+                status: 200,
+                results: (await compare(userpassword,
+                    results[0].userpassword)) ? results : 
+                    'You provided a wrong email or password'
+            })
         })
-    })
-/*
-(await 
-compare(userpassword, 
-    results.userpassword ) ) ? results :
-    'You provide a wrong email or password'
-====
-Have to compare: 
-compare(req.body.userpassword, results.userpassword)
-======
-require('crypto').randomBytes(64).toString('hex')
-*/
+    }catch(e) {
+        console.log(`From login: ${e.message}`);
+    }
 })
 // Create new products
 router.post('/products', bodyParser.json(), 
     (req, res)=> {
-    const bd = req.body; 
-    bd.totalamount = bd.quantity * bd.price;
-    // Query
-    const strQry = 
-    `
-    INSERT INTO products(prodName, prodUrl, quantity, price, totalamount, dateCreated)
-    VALUES(?, ?, ?, ?, ?, ?);
-    `;
-    //
-    db.query(strQry, 
-        [bd.prodName, bd.prodUrl, bd.quantity, bd.price, bd.totalamount, bd.dateCreated],
-        (err, results)=> {
-            if(err) throw err;
-            res.send(`number of affected row/s: ${results.affectedRows}`);
-        })
+    try{
+        
+        const bd = req.body; 
+        bd.totalamount = bd.quantity * bd.price;
+        // Query
+        const strQry = 
+        `
+        INSERT INTO products(prodName, prodUrl, quantity, price, totalamount, dateCreated)
+        VALUES(?, ?, ?, ?, ?, ?);
+        `;
+        //
+        db.query(strQry, 
+            [bd.prodName, bd.prodUrl, bd.quantity, bd.price, bd.totalamount, bd.dateCreated],
+            (err, results)=> {
+                if(err) throw err;
+                res.send(`number of affected row/s: ${results.affectedRows}`);
+            })
+    }catch(e) {
+        console.log(`Create a new product: ${e.message}`);
+    }
 });
 // Get all products
 router.get('/products', (req, res)=> {
