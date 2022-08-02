@@ -90,21 +90,21 @@ router.post('/login', bodyParser.json(),
         // When user provide a wrong email
         if(!results.length) {
             res.status(401).json( 
-                {msg: 'You provided the wrong email or password.'} 
+                {msg: 'You provided the wrong email.'} 
             );
         }
-        // bcrypt.compare()
+        // Authenticating a user
         await compare(userpassword, 
             results[0].userpassword,
             (cmpErr, cmpResults)=> {
             if(cmpErr) {
                 res.status(401).json(
                     {
-                        msg: 'Wrong password'
+                        msg: 'You provided the wrong password'
                     }
                 )
             }
-            // Applying a token
+            // Apply a token and it will expire within 1 hr.
             if(cmpResults) {
                 const token = 
                 jwt.sign(
@@ -113,7 +113,7 @@ router.post('/login', bodyParser.json(),
                     },
                     process.env.TOKEN_KEY, 
                     {
-                        expiresIn: '2h'
+                        expiresIn: '1h'
                     }  
                 );
                 // Login
