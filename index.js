@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const db = require('./config/dbconn');
 const {compare, hash} = require('bcrypt');
 // Express app
@@ -21,85 +22,128 @@ app.listen(port, ()=> {
     console.log(`Server is running on port ${port}`);
 });
 // home
-router.get('/', (req, res)=> {
+router.get('/', (req, res)=> { 
     res.status(200).sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 // User registration
 router.post('/register',bodyParser.json(), 
-    async (req, res)=> {
-    try{
-        const bd = req.body; 
-        if(bd.userRole === ' ' || bd.userRole === null) {
-            bd.userRole = 'user';
-        }
-        // Encrypting a password
-        // Default value of salt is 10. 
-        bd.userpassword = await hash(bd.userpassword, 10);
-        // Query
-        const strQry = 
-        `
-        INSERT INTO users(firstname, lastname, gender, address, userRole, email, userpassword)
-        VALUES(?, ?, ?, ?, ?, ?, ?);
-        `;
-        db.query(strQry, 
-            [bd.firstname, bd.lastname, bd.gender, bd.address, bd.userRole,bd.email, bd.userpassword],
-            (err, results)=> {
-                if(err) throw err;
-                res.send(`number of affected row/s: ${results.affectedRows}`);
-            })
-    }catch(e) {
-        console.log(`From registration: ${e.message}`);
+     (req, res)=> {
+    // Retrieving data that was sent by the user
+    let {firstname, lastname, gender, address, userRole, 
+        email, userpassword} = req.body; 
+    // If the userRole is null or empty, set it to "user".
+    if(userRole.length === 0) {
+        userRole = "user";
     }
+    // Check if a user already exists
+    let strQry =
+    `SELECT email, userpassword
+    FROM users
+    WHERE UPPER(email) = UPPER('${email}')`;
+    db.query(strQry, 
+        async (err, results)=> {
+        if(err){
+            res.status(500).json({msg: err});
+        }else {
+            if(results.length) {
+                res.status(409).json({msg: 'User already exist'});
+            }else {
+                // Encrypting a password
+                // Default value of salt is 10. 
+                userpassword = await hash(userpassword, 10);
+                // Query
+                strQry = 
+                `
+                INSERT INTO users(firstname, lastname, gender, address, userRole, email, userpassword)
+                VALUES(?, ?, ?, ?, ?, ?, ?);
+                `;
+                db.query(strQry, 
+                    [firstname, lastname, gender, address, userRole, email, userpassword],
+                    (err, results)=> {
+                        if(err){
+                            res.status(400).json({msg: 'Data is required'});
+                        }else {
+                            res.status(201).json({msg: `number of affected row is: ${results.affectedRows}`});
+                        }
+                    })
+            }
+        }
+    });
 });
 // Login
 router.post('/login', bodyParser.json(),
     (req, res)=> {
-    try{
-
-        // Get email and password
-        const { email, userpassword } = req.body;
-        const strQry = 
-        `
-        SELECT firstname, gender, email, userpassword
-        FROM users 
-        WHERE email = '${email}';
-        `;
-        db.query(strQry, async (err, results)=> {
-            if(err) throw err;
-            res.json({
-                status: 200,
-                results: (await compare(userpassword,
-                    results[0].userpassword)) ? results : 
-                    'You provided a wrong email or password'
-            })
-        })
-    }catch(e) {
-        console.log(`From login: ${e.message}`);
-    }
+    // Get email and password
+    const { email, userpassword } = req.body;
+    console.log(userpassword);
+    const strQry = 
+    `
+    SELECT firstname, gender, email, userpassword
+    FROM users 
+    WHERE email = '${email}';
+    `;
+    db.query(strQry, async (err, results)=> {
+        // In case there is an error
+        if(err){
+            res.status(400).json({msg: err});
+        }
+        // When user provide a wrong email
+        if(!results.length) {
+            res.status(401).json( 
+                {msg: 'You provided the wrong email or password.'} 
+            );
+        }
+        // bcrypt.compare()
+        await compare(userpassword, 
+            results[0].userpassword,
+            (cmpErr, cmpResults)=> {
+            if(cmpErr) {
+                res.status(401).json(
+                    {
+                        msg: 'Wrong password'
+                    }
+                )
+            }
+            // Applying a token
+            if(cmpResults) {
+                const token = 
+                jwt.sign(
+                    {
+                        id: results[0].id
+                    },
+                    process.env.TOKEN_KEY, 
+                    {
+                        expiresIn: '2h'
+                    }  
+                );
+                // Login
+                res.status(200).json({
+                    msg: 'Logged in',
+                    token,
+                    results: results[0]
+                })
+            }
+        });
+    })
 })
 // Create new products
 router.post('/products', bodyParser.json(), 
     (req, res)=> {
-    try{
-        
-        const bd = req.body; 
-        bd.totalamount = bd.quantity * bd.price;
-        // Query
-        const strQry = 
-        `
-        INSERT INTO products(prodName, prodUrl, quantity, price, totalamount, dateCreated)
-        VALUES(?, ?, ?, ?, ?, ?);
-        `;
-        //
-        db.query(strQry, 
-            [bd.prodName, bd.prodUrl, bd.quantity, bd.price, bd.totalamount, bd.dateCreated],
-            (err, results)=> {
-                if(err) throw err;
-                res.send(`number of affected row/s: ${results.affectedRows}`);
-            })
-    }catch(e) {
-        console.log(`Create a new product: ${e.message}`);
-    }
+    const bd = req.body; 
+    bd.totalamount = bd.quantity * bd.price;
+    // Query
+    const strQry = 
+    `
+    INSERT INTO products(prodName, prodUrl, quantity, price, totalamount, dateCreated)
+    VALUES(?, ?, ?, ?, ?, ?);
+    `;
+    //
+    db.query(strQry, 
+        [bd.prodName, bd.prodUrl, bd.quantity, bd.price, bd.totalamount, bd.dateCreated],
+        (err, results)=> {
+            if(err) throw err;
+            res.send(`number of affected row/s: ${results.affectedRows}`);
+        })
 });
 // Get all products
 router.get('/products', (req, res)=> {
