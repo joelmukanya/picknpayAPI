@@ -36,7 +36,7 @@ router.get('/', (req, res)=> {
 // Get users
 router.get('/users', (req, res)=> {
     let strQry =
-    `SELECT firstname, lastname, gender, address, userRole, email, userpassword
+    `SELECT id, firstname, lastname, gender, address, userRole, email, userpassword
     FROM users`;
     db.query(strQry, (err, results)=> {
         if(err) throw err; 
