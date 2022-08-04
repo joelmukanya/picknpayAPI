@@ -16,6 +16,10 @@ const router = express.Router();
 // Configuration 
 const port = parseInt(process.env.PORT) || 4000;
 
+// Set header
+app.use((req, res, next)=>{
+    res.setHeader('Access-Control-Allow-Origin', '*');
+})
 app.use(router, cors(), express.json(), 
     express.urlencoded({
     extended: true})
