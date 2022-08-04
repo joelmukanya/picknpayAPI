@@ -33,6 +33,19 @@ app.listen(port, ()=> {
 router.get('/', (req, res)=> { 
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
+// Get users
+router.get('/users', (req, res)=> {
+    let strQry =
+    `SELECT firstname, lastname, gender, address, userRole, email, userpassword
+    FROM users`;
+    db.query(strQry, (err, results)=> {
+        if(err) throw err; 
+        res.status(200).json({
+            results: results
+        })
+    });
+
+});
 // User registration
 router.post('/register',bodyParser.json(), 
      (req, res)=> {
