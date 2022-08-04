@@ -7,12 +7,15 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const db = require('./config/dbconn');
 const {compare, hash} = require('bcrypt');
+// Error handling
+const createError = require('./middleware/ErrorHandling');
 // Express app
 const app = express();
 // Express router
 const router = express.Router();
 // Configuration 
 const port = parseInt(process.env.PORT) || 4000;
+
 app.use(router, cors(), express.json(), 
     express.urlencoded({
     extended: true})
@@ -23,7 +26,7 @@ app.listen(port, ()=> {
 });
 // home
 router.get('/', (req, res)=> { 
-    res.status(200).sendFile(path.join(__dirname, 'views', 'index.html'));
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 // User registration
 router.post('/register',bodyParser.json(), 
@@ -39,11 +42,11 @@ router.post('/register',bodyParser.json(),
     let strQry =
     `SELECT email, userpassword
     FROM users
-    WHERE UPPER(email) = UPPER('${email}')`;
+    WHERE LOWER(email) = LOWER('${email}')`;
     db.query(strQry, 
         async (err, results)=> {
         if(err){
-            res.status(500).json({msg: err});
+            throw err
         }else {
             if(results.length) {
                 res.status(409).json({msg: 'User already exist'});
@@ -61,7 +64,7 @@ router.post('/register',bodyParser.json(),
                     [firstname, lastname, gender, address, userRole, email, userpassword],
                     (err, results)=> {
                         if(err){
-                            res.status(400).json({msg: 'Data is required'});
+                           throw err;
                         }else {
                             res.status(201).json({msg: `number of affected row is: ${results.affectedRows}`});
                         }
@@ -84,9 +87,7 @@ router.post('/login', bodyParser.json(),
     `;
     db.query(strQry, async (err, results)=> {
         // In case there is an error
-        if(err){
-            res.status(400).json({msg: err});
-        }
+        if(err) throw err;
         // When user provide a wrong email
         if(!results.length) {
             res.status(401).json( 
@@ -109,11 +110,17 @@ router.post('/login', bodyParser.json(),
                 const token = 
                 jwt.sign(
                     {
-                        id: results[0].id
+                        id: results[0].id,
+                        firstname: results[0].firstname,
+                        lastname: results[0].lastname,
+                        gender: results[0].gender,
+                        email: results[0].email
                     },
                     process.env.TOKEN_KEY, 
                     {
                         expiresIn: '1h'
+                    }, (err) => {
+                        if(err) throw err
                     }  
                 );
                 // Login
@@ -121,7 +128,7 @@ router.post('/login', bodyParser.json(),
                     msg: 'Logged in',
                     token,
                     results: results[0]
-                })
+                })                
             }
         });
     })
@@ -195,7 +202,7 @@ router.put('/products', (req, res)=> {
 });
 
 // Delete product
-router.delete('/clinic/:id', (req, res)=> {
+router.delete('/products/:id', (req, res)=> {
     // Query
     const strQry = 
     `
@@ -207,3 +214,4 @@ router.delete('/clinic/:id', (req, res)=> {
         res.send(`${data.affectedRows} row was affected`);
     })
 });
+app.use(createError);
