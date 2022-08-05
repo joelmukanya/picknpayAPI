@@ -56,9 +56,10 @@ router.post('/register',bodyParser.json(),
     let {firstname, lastname, gender, address, userRole, 
         email, userpassword} = req.body; 
     // If the userRole is null or empty, set it to "user".
-    if(userRole.length === 0 || userRole.includes() !== 'user' 
-    || userRole.includes() !== 'admin') {
-        userRole = "user";
+    if(userRole.length === 0) {
+        if(( userRole.includes() !== 'user' || 
+            userRole.includes() !== 'admin'))
+            userRole = "user";
     }
     // Check if a user already exists
     let strQry =
