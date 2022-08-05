@@ -232,4 +232,4 @@ router.delete('/products/:id', (req, res)=> {
         res.send(`${data.affectedRows} row was affected`);
     })
 });
-app.use(createError);
+// app.use(createError);
