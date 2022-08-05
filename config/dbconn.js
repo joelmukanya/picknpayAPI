@@ -14,11 +14,7 @@ let connection;
     });
     
     connection.connect( (err)=> {
-        try{
-            if(err) throw err 
-        }catch(e) {
-           localStorage.setItem('dbConnection', 'Please check your internet connection.')
-        }
+        if(err) throw err 
     });
     
     connection.on('error', (err)=> {
